@@ -87,7 +87,7 @@ const PRODUCTOS = [
     descripcion: "Una opcion diferente dentro de la linea. Perfil herbal (cedron, anis, manzanilla, hinojo y carqueja) con 24 meses de estacionamiento, pensada para quienes disfrutan salir del sabor tradicional y buscar algo con otra personalidad.",
     fotoEmpaque: "assets/reiverdeverde.PNG",
     fotoMolienda: "https://picsum.photos/seed/lamerced-mol/600/450",
-    categoria: "yerbas"
+    categoria: "yerbas", destacado:true
   },
   {
     id: 9,
