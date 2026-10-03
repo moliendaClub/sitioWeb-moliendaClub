@@ -46,7 +46,7 @@ const PRODUCTOS = [
     categoria: "yerbas"
   },
   {
-    id: 5,
+    id: 10,
     nombre: "Rei Verde Premium 1kg",
     marca: "Rei Verde",
     precioOriginal: 12500,
@@ -102,7 +102,7 @@ const PRODUCTOS = [
     
   },
   {
-    id: 10,
+    id: 5,
     nombre: "Rei Verde Classica 500gr",
     marca: "Rei Verde",
     precioOriginal: 4800,
