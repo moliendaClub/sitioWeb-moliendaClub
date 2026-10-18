@@ -474,6 +474,11 @@
     flex-direction: column;
   align-items: flex-start;
   gap: 0.1rem;
+    /*margin-top: auto;
+    padding-top: 0.6rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;*/
   }
 
   .precio-final{
@@ -1488,6 +1493,12 @@
     gap: 1rem;
   }
 
+  .tarjeta-precios{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+
   .nav-links{
     display: none;
   }
@@ -1887,9 +1898,16 @@ const enviarPedido = document.getElementById("enviar-pedido");
 const botonVaciarPedido = document.getElementById("vaciar-pedido");
 const pedido = [];
 const stockPorProducto = {};
+let estadoCargaStock = "cargando";
+
+function normalizarIdProducto(productoId){
+  const id = String(productoId ?? "").trim();
+  const idNumerico = Number(id);
+  return id && Number.isSafeInteger(idNumerico) ? String(idNumerico) : id;
+}
 
 function obtenerStock(productoId){
-  const stock = stockPorProducto[String(productoId)];
+  const stock = stockPorProducto[normalizarIdProducto(productoId)];
   return stock !== undefined ? stock : null;
 }
 
@@ -2197,13 +2215,17 @@ function abrirModal(producto){
   modalTitulo.textContent = producto.nombre;
   modalDescripcion.textContent = producto.descripcion;
 
-  const stockModal = stockPorProducto[String(producto.id)];
-  if(stockModal !== undefined){
+  const stockModal = obtenerStock(producto.id);
+  if(stockModal !== null){
     modalStock.textContent = `Stock disponible: ${stockModal}`;
     modalStock.classList.toggle("sin-stock", stockModal <= 0);
     modalStock.classList.remove("error-stock");
   } else {
-    modalStock.textContent = "Consultando stock…";
+    modalStock.textContent = estadoCargaStock === "cargando"
+      ? "Consultando stock…"
+      : estadoCargaStock === "error"
+        ? "No se pudo cargar el stock"
+        : "Stock no disponible";
     modalStock.classList.remove("sin-stock", "error-stock");
   }
 
@@ -2344,6 +2366,7 @@ document.addEventListener("keydown", (evento) => {
   ================================================================ */
 
 function marcarErrorStock(mensaje){
+  estadoCargaStock = "error";
   document.querySelectorAll(".tarjeta-stock").forEach((elemento) => {
     elemento.textContent = mensaje;
     elemento.classList.add("error-stock");
@@ -2355,19 +2378,20 @@ function marcarErrorStock(mensaje){
 }
 
 function aplicarStock(id, stock){
-  stockPorProducto[id] = stock;
+  const idNormalizado = normalizarIdProducto(id);
+  stockPorProducto[idNormalizado] = stock;
 
   const textoStock = `Stock disponible: ${stock}`;
   const sinStock = stock <= 0;
 
-  const elementoStock = document.getElementById(`stock-${id}`);
+  const elementoStock = document.getElementById(`stock-${idNormalizado}`);
   if(elementoStock){
     elementoStock.textContent = textoStock;
     elementoStock.classList.toggle("sin-stock", sinStock);
     elementoStock.classList.remove("error-stock");
   }
 
-  if(productoActivo && String(productoActivo.id) === id && modalStock){
+  if(productoActivo && normalizarIdProducto(productoActivo.id) === idNormalizado && modalStock){
     modalStock.textContent = textoStock;
     modalStock.classList.toggle("sin-stock", sinStock);
     modalStock.classList.remove("error-stock");
@@ -2462,7 +2486,10 @@ async function actualizarDatosProductos(){
 
     filas.slice(1).forEach((fila) => {
       const id = String(fila[columnas.id] || "").trim();
-      const producto = PRODUCTOS.find((elemento) => String(elemento.id) === id);
+      const idNormalizado = normalizarIdProducto(id);
+      const producto = PRODUCTOS.find((elemento) =>
+        elemento && normalizarIdProducto(elemento.id) === idNormalizado
+      );
       if(!producto) return;
 
       const stock = numeroDesdeCSV(fila[columnas.stock]);
@@ -2470,7 +2497,7 @@ async function actualizarDatosProductos(){
       const descuentoPorcentaje = numeroDesdeCSV(fila[columnas.descuentoPorcentaje]);
       const precioOriginal = numeroDesdeCSV(fila[columnas.precioOriginal]);
 
-      if(stock !== null) aplicarStock(id, stock);
+      if(stock !== null) aplicarStock(idNormalizado, stock);
       if(precioBase !== null) producto.precioBase = precioBase;
       if(descuentoPorcentaje !== null) producto.descuentoPorcentaje = descuentoPorcentaje;
       if(precioOriginal !== null) producto.precioOriginal = precioOriginal;
@@ -2484,6 +2511,7 @@ async function actualizarDatosProductos(){
       }
     });
 
+    estadoCargaStock = "cargado";
     if(filasProcesadas === 0){
       marcarErrorStock("No se encontraron datos de stock");
     }
